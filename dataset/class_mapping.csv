@@ -1,0 +1,13 @@
+Semi-supervised Image Classification,,,Semi-supervised Semantic Segmentation,
+,,,,
+Class Index,Class Name,,Class Index,Class Name
+0,Flooded,,0,Background
+1,Non-flooded,,1,Building-flooded
+,,,2,Building-non-flooded
+,,,3,Road-flooded
+,,,4,Road-non-flooded
+,,,5,Water
+,,,6,Tree
+,,,7,Vehicle
+,,,8,Pool
+,,,9,Grass
