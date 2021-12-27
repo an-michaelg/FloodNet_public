@@ -1,0 +1,6 @@
+# ignore items in logs folder
+**/logs
+# ignore items in wandb folder
+**/wandb
+# ignore items in dataset folder
+**/dataset

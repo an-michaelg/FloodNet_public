@@ -2,6 +2,7 @@ import os
 import torch
 from losses import dice_loss_logits, iou_logits
 from utils import label_to_one_hot, vis_pred
+import wandb
 
 class Network(object):
     """Wrapper for training and testing pipelines."""
@@ -12,6 +13,8 @@ class Network(object):
         self.model = model
         self.num_classes = config.num_classes
         self.optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(
+            self.optimizer, gamma=config.exponential_gamma)
         self.loss_type = config.loss_type
         if self.config.use_cuda: 
             self.model.cuda()
@@ -29,7 +32,10 @@ class Network(object):
         self.log_func = print
 
         # Define directory wghere we save states such as trained model.
-        self.log_dir = self.config.log_dir
+        if self.config.use_wandb:
+            self.log_dir = os.path.join(self.config.log_dir, wandb.run.name)
+        else:
+            self.log_dir = self.config.log_dir
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -139,8 +145,12 @@ class Network(object):
 
             loss_avg = torch.mean(torch.stack(losses)).item()
             acc, val_loss = self.test(loader_va, mode="valid")
+            self.scheduler.step()
+            
             # Save model every epoch.
             self._save(self.checkpts_file)
+            if config.use_wandb:
+                wandb.log({"tr_loss":loss_avg, "val_loss":val_loss, "val_iou":acc})
 
             # Early stopping strategy.
             if acc > best_va_acc:
@@ -211,6 +221,12 @@ if __name__ == "__main__":
     from get_model import get_model
 
     config = get_config()
+    
+    if config.use_wandb:
+        run = wandb.init(project="floodNet-baseline", 
+                         entity="guangnan", 
+                         config=config)
+    
     model = get_model(config)
     net = Network(model, config)
     dataloader_tr, dataloader_va = get_dataloader(config, mode="train")
@@ -224,10 +240,10 @@ if __name__ == "__main__":
     # out_segmap = torch.argmax(pred, dim=1, keepdim=True).detach()
     # vis_pred(image[0], out_segmap[0], mask[0])
     
-    mode="test"
-    
-    if mode=="train":
+    if config.mode=="train":
         net.train(dataloader_tr, dataloader_va)
         net.test(dataloader_va, mode="test", vis_all = True)
-    if mode=="test":
+    if config.mode=="test":
         net.test(dataloader_va, mode="test", vis_all = True)
+    if config.use_wandb:
+        wandb.finish()

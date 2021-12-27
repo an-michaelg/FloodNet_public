@@ -5,6 +5,7 @@ def get_config():
     config = ml_collections.ConfigDict()
 
     config.mode = "train"
+    config.use_wandb = True
 
     # Hyperparameters for dataset. 
     config.ratio_tr_data = 0.8 
@@ -21,7 +22,8 @@ def get_config():
     config.log_dir = "logs"
     config.use_cuda = True
     config.batch_size = 8
-    config.num_epochs = 16
-    config.lr = 1e-4 
+    config.num_epochs = 50
+    config.lr = 1e-3 
+    config.exponential_gamma = 0.9
  
     return config

@@ -11,6 +11,13 @@ import torchvision.transforms.functional as TF
 
 from PIL import Image
 
+def seed_everything(num):
+    random.seed(num)
+    np.random.seed(num)
+    torch.manual_seed(num)
+
+seed_everything(42)
+
 def get_dataloader(config, mode='train'):
     img_dim = config.image_dim
     dataset = DataLoaderSegmentation('./dataset/train/Labeled', img_dim)

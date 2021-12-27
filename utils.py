@@ -50,6 +50,7 @@ def vis_pred(img, pred, label, unnorm=True):
     axs[2].imshow(decode_segmap(label_arr))
     axs[2].set_title('Target')
     plt.show()
+    plt.close('all')
     
 
 def label_to_one_hot(y, nc):
