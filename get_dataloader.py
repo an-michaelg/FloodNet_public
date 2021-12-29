@@ -19,16 +19,16 @@ def seed_everything(num):
 seed_everything(42)
 
 def get_dataloader(config, mode='train'):
-    img_dim = config.image_dim
+    img_dim = config['image_dim']
     dataset = DataLoaderSegmentation('./dataset/train/Labeled', img_dim)
     loader = functools.partial(
         DataLoader,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
+        batch_size=config['batch_size'],
+        num_workers=config['num_workers'],
     )
     loader_list = []
     if mode=='train':
-        ratio_tr_data = config.ratio_tr_data
+        ratio_tr_data = config['ratio_tr_data']
         num_all = len(dataset)
 
         idx = np.random.permutation(np.arange(num_all))
@@ -104,6 +104,6 @@ class DataLoaderSegmentation(Dataset):
 # loader = DataLoader(dataset=dset, shuffle=True, batch_size=1, num_workers=0)
 # data = next(iter(loader)) 
 # vis_pair(data['image'][0], data['mask'][0])
-# mask = data[1]
+# mask = data['mask'][0]
 # import torch.nn.functional as F
 # mask_oh = F.one_hot(mask, num_classes=10)#, num_classes=10)

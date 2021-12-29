@@ -1,3 +1,5 @@
+import torch
+from utils import label_to_one_hot
 import torch.nn.functional as F
 
 def dice_loss(pred, target):
@@ -46,7 +48,9 @@ def iou(pred, target):
 
     """
     epsilon = 1e-8
-    iflat = pred.view(-1)
+    pred_argmax = torch.argmax(pred, dim=1, keepdim=True)
+    pred_discrete = label_to_one_hot(pred_argmax, pred.shape[1]).contiguous()
+    iflat = pred_discrete.view(-1)
     tflat = target.view(-1)
     intersection = (iflat * tflat).sum()
     union = iflat.sum() + tflat.sum() - intersection
@@ -56,3 +60,7 @@ def iou_logits(pred, target):
     """ see iou """
     pred_sm = F.softmax(pred, dim=1)
     return iou(pred_sm, target)
+
+# logits = torch.randn(4,10,32,32)
+# labels = torch.ones(4,10,32,32)
+# b = iou_logits(logits, labels)

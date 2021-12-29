@@ -11,12 +11,12 @@ class Network(object):
         """Initialize configuration."""
         self.config = config
         self.model = model
-        self.num_classes = config.num_classes
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+        self.num_classes = config['num_classes']
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(
-            self.optimizer, gamma=config.exponential_gamma)
-        self.loss_type = config.loss_type
-        if self.config.use_cuda: 
+            self.optimizer, gamma=config['exponential_gamma'])
+        self.loss_type = config['loss_type']
+        if self.config['use_cuda']: 
             self.model.cuda()
         # Recording the training losses and validation performance.
         self.train_losses = []
@@ -32,10 +32,10 @@ class Network(object):
         self.log_func = print
 
         # Define directory wghere we save states such as trained model.
-        if self.config.use_wandb:
-            self.log_dir = os.path.join(self.config.log_dir, wandb.run.name)
+        if self.config['use_wandb']:
+            self.log_dir = os.path.join(self.config['log_dir'], wandb.run.name)
         else:
-            self.log_dir = self.config.log_dir
+            self.log_dir = self.config['log_dir']
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -44,44 +44,6 @@ class Network(object):
 
         # We save model that achieves the best performance: early stopping strategy.
         self.bestmodel_file = os.path.join(self.log_dir, "best_model.pth")
-
-    # def plot_log(self):
-    #     """Plot training logs (better with tensorboard, but we will try matplotlib this time!)."""
-
-    #     # Draw plots for the training and validation results, as shown in
-    #     # the example results. Use matplotlib's subplots.
-    #     fig, (ax1, ax2) = plt.subplots(2)
-    #     fig.suptitle("Visualization of training logs")
-
-    #     ax1.plot(self.idx_steps, self.train_losses)
-    #     ax2.plot(self.idx_steps, self.valid_oas)
-    #     ax1.set_title("Training loss curve")
-    #     ax2.set_title("Validation accuracy curve")
-    #     plt.tight_layout()
-    #     plt.show()
-    #     plt.close()
-
-
-    # def plot_ae(self, x):
-    #     """Ploting the auto-encoding -- we show the pair of input and reconstruction.
-
-    #     Args:
-    #         x (tensor): input point clouds of `(1, n, d)`.           
-    #     """
-    #     num_sample = x.shape[0]
-    #     self.model.eval()
-    #     fig, axes= plt.subplots(num_sample, 2)
-    #     fig.suptitle("Plot of autoencoding.")
-    #     y = self.model(x)
-    #     for i in range(num_sample):
-    #         ax1, ax2 = axes[i, 0], axes[i, 1]
-    #         self.model.vis_ae(ax1, ax2, x[i], y[i])
-    #         if i == 0:
-    #             ax1.set_title("Input Point clouds.")
-    #             ax2.set_title("Reconstruction.")
-    #     plt.tight_layout()
-    #     plt.show()
-    #     plt.close() 
  
     
     def _save(self, pt_file):
@@ -122,16 +84,16 @@ class Network(object):
         self.model.train()
         best_va_acc = 0.0 # Record the best validation metrics.
 
-        for epoch in range(self.config.num_epochs):
+        for epoch in range(self.config['num_epochs']):
             losses = []
             for data in loader_tr:
                 # Transfer data from CPU to GPU.
-                if self.config.use_cuda:
+                if self.config['use_cuda']:
                     for key in data.keys():
                         data[key] = data[key].cuda()
                 
                 # get the logit output
-                pred = self.model(data["image"])["out"] #BxCxHxW
+                pred = self.model(data["image"]) #BxCxHxW
                 target = label_to_one_hot(data["mask"], self.num_classes).contiguous()
                 loss = self._get_loss(pred, target)
                 losses += [loss]
@@ -149,7 +111,7 @@ class Network(object):
             
             # Save model every epoch.
             self._save(self.checkpts_file)
-            if config.use_wandb:
+            if config['use_wandb']:
                 wandb.log({"tr_loss":loss_avg, "val_loss":val_loss, "val_iou":acc})
 
             # Early stopping strategy.
@@ -180,11 +142,11 @@ class Network(object):
         losses = []
         num_samples = 0
         for data in loader_te:
-            if self.config.use_cuda:
+            if self.config['use_cuda']:
                 for key in data.keys():
                     data[key] = data[key].cuda()
             batch_size = len(data["image"])
-            pred = self.model(data["image"])["out"]
+            pred = self.model(data["image"])
             target = label_to_one_hot(data["mask"], self.num_classes).contiguous()
             
             acc = iou_logits(pred, target)
@@ -222,7 +184,7 @@ if __name__ == "__main__":
 
     config = get_config()
     
-    if config.use_wandb:
+    if config['use_wandb']:
         run = wandb.init(project="floodNet-baseline", 
                          entity="guangnan", 
                          config=config)
@@ -233,17 +195,17 @@ if __name__ == "__main__":
     
     # data = next(iter(dataloader_tr)) 
     # image, mask = data["image"].cuda(), data["mask"].cuda()
-    # target = label_to_one_hot(mask, config.num_classes).contiguous()
+    # target = label_to_one_hot(mask, config['num_classes).contiguous()
     # pred = model(image)["out"] #BxCxHxW
     # loss = dice_loss_logits(pred, target)
     # iou = iou_logits(pred, target)
     # out_segmap = torch.argmax(pred, dim=1, keepdim=True).detach()
     # vis_pred(image[0], out_segmap[0], mask[0])
     
-    if config.mode=="train":
+    if config['mode']=="train":
         net.train(dataloader_tr, dataloader_va)
         net.test(dataloader_va, mode="test", vis_all = True)
-    if config.mode=="test":
+    if config['mode']=="test":
         net.test(dataloader_va, mode="test", vis_all = True)
-    if config.use_wandb:
+    if config['use_wandb']:
         wandb.finish()
