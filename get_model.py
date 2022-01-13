@@ -7,7 +7,7 @@ def get_model(config):
     
     if config['model'] == "deeplab_resnet50":
         # instantiate the pretrained model
-        model = deeplabv3_resnet50(pretrained=True, progress=False, num_classes=21)
+        model = deeplabv3_resnet50(pretrained=config['pretrained'], progress=False, num_classes=21)
         
         # replace the final classifier layer with an untrained layer with N classes
         model.classifier[4] = nn.Conv2d(256, nc, kernel_size=(1, 1), stride=(1, 1))

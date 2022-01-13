@@ -3,6 +3,8 @@ def get_config():
     config = {}
     config['mode'] = "train"
     config['use_wandb'] = True
+    config['log_dir'] = "logs"
+    config['test_dir'] = None #"worthy-sweep-8" # only need to be specified for testing
 
     # Hyperparameters for dataset. 
     config['ratio_tr_data'] = 0.8 
@@ -11,17 +13,16 @@ def get_config():
     config['image_dim'] = (256, 256)
 
     # Hyperparameters for models.
-    config['model'] = "UNet"
-    config['pretrained'] = False
+    config['model'] = "UNet" #deeplab_resnet50/UNet
+    config['pretrained'] = True
     config['loss_type'] = "Dice"
-    config['num_filters'] = 16
+    config['num_filters'] = 32
 
     # Hyperparameters for training.
-    config['log_dir'] = "logs"
     config['use_cuda'] = True
     config['batch_size'] = 8
     config['lr'] = 1e-3 
-    config['exponential_gamma'] = 0.9
+    config['exponential_gamma'] = 0.95
     config['num_epochs'] = 50
  
     return config

@@ -4,6 +4,8 @@ from losses import dice_loss_logits, iou_logits
 from utils import label_to_one_hot, vis_pred
 import wandb
 
+SHOW_IMAGES = True
+
 class Network(object):
     """Wrapper for training and testing pipelines."""
 
@@ -33,7 +35,12 @@ class Network(object):
 
         # Define directory wghere we save states such as trained model.
         if self.config['use_wandb']:
-            self.log_dir = os.path.join(self.config['log_dir'], wandb.run.name)
+            if self.config['mode'] == "train":
+                self.log_dir = os.path.join(self.config['log_dir'], wandb.run.name)
+            elif self.config['mode'] == "test":
+                self.log_dir = os.path.join(self.config['log_dir'], self.config['test_dir'])
+            else:
+                raise NotImplementedError
         else:
             self.log_dir = self.config['log_dir']
         if not os.path.exists(self.log_dir):
@@ -94,6 +101,8 @@ class Network(object):
                 
                 # get the logit output
                 pred = self.model(data["image"]) #BxCxHxW
+                if self.config['model'] == "deeplab_resnet50":
+                    pred = pred['out']
                 target = label_to_one_hot(data["mask"], self.num_classes).contiguous()
                 loss = self._get_loss(pred, target)
                 losses += [loss]
@@ -111,7 +120,7 @@ class Network(object):
             
             # Save model every epoch.
             self._save(self.checkpts_file)
-            if config['use_wandb']:
+            if self.config['use_wandb']:
                 wandb.log({"tr_loss":loss_avg, "val_loss":val_loss, "val_iou":acc})
 
             # Early stopping strategy.
@@ -147,6 +156,8 @@ class Network(object):
                     data[key] = data[key].cuda()
             batch_size = len(data["image"])
             pred = self.model(data["image"])
+            if self.config['model'] == "deeplab_resnet50":
+                pred = pred['out']
             target = label_to_one_hot(data["mask"], self.num_classes).contiguous()
             
             acc = iou_logits(pred, target)
@@ -157,18 +168,20 @@ class Network(object):
             
             num_samples += batch_size
             
-            if vis_all:
-                out_segmap = torch.argmax(pred, dim=1, keepdim=True).detach()
-                for i in range(batch_size):
-                    vis_pred(data["image"][i], out_segmap[i], data["mask"][i])
+            if SHOW_IMAGES:
+                if vis_all:
+                    out_segmap = torch.argmax(pred, dim=1, keepdim=True).detach()
+                    for i in range(batch_size):
+                        vis_pred(data["image"][i], out_segmap[i], data["mask"][i])
 
         avg_acc = torch.stack(accs).sum() / num_samples
         avg_loss = torch.mean(torch.stack(losses)).item()
         
         # print one instance of the results
-        out_segmap = torch.argmax(pred, dim=1, keepdim=True).detach()
-        if not vis_all:
-            vis_pred(data["image"][0], out_segmap[0], data["mask"][0])
+        if SHOW_IMAGES:
+            if not vis_all:
+                out_segmap = torch.argmax(pred, dim=1, keepdim=True).detach()
+                vis_pred(data["image"][0], out_segmap[0], data["mask"][0])
 
         # Switch the model into training mode
         self.model.train()
@@ -176,22 +189,22 @@ class Network(object):
         
 
 
-if __name__ == "__main__":
-    """Main for mock testing."""
-    from get_config import get_config
-    from get_dataloader import get_dataloader
-    from get_model import get_model
+# if __name__ == "__main__":
+    # """Main for mock testing."""
+    # from get_config import get_config
+    # from get_dataloader import get_dataloader
+    # from get_model import get_model
 
-    config = get_config()
+    # config = get_config()
     
-    if config['use_wandb']:
-        run = wandb.init(project="floodNet-baseline", 
-                         entity="guangnan", 
-                         config=config)
+    # if config['use_wandb']:
+        # run = wandb.init(project="floodNet-baseline", 
+                         # entity="guangnan", 
+                         # config=config)
     
-    model = get_model(config)
-    net = Network(model, config)
-    dataloader_tr, dataloader_va = get_dataloader(config, mode="train")
+    # model = get_model(config)
+    # net = Network(model, config)
+    # dataloader_tr, dataloader_va = get_dataloader(config, mode="train")
     
     # data = next(iter(dataloader_tr)) 
     # image, mask = data["image"].cuda(), data["mask"].cuda()
@@ -202,10 +215,10 @@ if __name__ == "__main__":
     # out_segmap = torch.argmax(pred, dim=1, keepdim=True).detach()
     # vis_pred(image[0], out_segmap[0], mask[0])
     
-    if config['mode']=="train":
-        net.train(dataloader_tr, dataloader_va)
-        net.test(dataloader_va, mode="test", vis_all = True)
-    if config['mode']=="test":
-        net.test(dataloader_va, mode="test", vis_all = True)
-    if config['use_wandb']:
-        wandb.finish()
+    # if config['mode']=="train":
+        # net.train(dataloader_tr, dataloader_va)
+        # net.test(dataloader_va, mode="test", vis_all = True)
+    # if config['mode']=="test":
+        # net.test(dataloader_va, mode="test", vis_all = True)
+    # if config['use_wandb']:
+        # wandb.finish()
