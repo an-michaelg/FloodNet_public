@@ -1,10 +1,10 @@
 def get_config():
     """Get the hyperparameter configuration."""
     config = {}
-    config['mode'] = "train"
+    config['mode'] = "test"
     config['use_wandb'] = True
     config['log_dir'] = "logs"
-    config['test_dir'] = None #"worthy-sweep-8" # only need to be specified for testing
+    config['test_dir'] = "easy-sweep-6" # only need to be specified for testing
 
     # Hyperparameters for dataset. 
     config['ratio_tr_data'] = 0.8 
@@ -14,9 +14,9 @@ def get_config():
 
     # Hyperparameters for models.
     config['model'] = "UNet" #deeplab_resnet50/UNet
-    config['pretrained'] = True
+    config['pretrained'] = False
     config['loss_type'] = "Dice"
-    config['num_filters'] = 32
+    config['num_filters'] = 16
 
     # Hyperparameters for training.
     config['use_cuda'] = True

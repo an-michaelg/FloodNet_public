@@ -2,6 +2,8 @@ import numpy as np
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torchvision.transforms import Normalize
+import random
+import string
 
 def vis_pair(img, label, unnorm=True):
     """
@@ -49,6 +51,10 @@ def vis_pred(img, pred, label, unnorm=True):
     axs[1].set_title('Prediction')
     axs[2].imshow(decode_segmap(label_arr))
     axs[2].set_title('Target')
+    for i in range(3):
+        axs[i].get_xaxis().set_visible(False)
+        axs[i].get_yaxis().set_visible(False)
+    
     plt.show()
     plt.close('all')
     
@@ -94,13 +100,20 @@ def decode_segmap(image, nc=10):
 
     """
   
+    # label_colors = np.array([(0, 0, 0),  # 0=background
+    #     # 1=building_flooded, 2=building_non_flooded
+    #     (250, 0, 0), (150, 100, 100),
+    #     # 3=road_flooded, 4=road_non_flooded, 5=water, 6=tree
+    #     (175, 175, 50), (128, 128, 128), (0, 250, 250), (0, 0, 250),
+    #     # 7=vehicle, 8=pool, 9=grass
+    #     (250, 0, 250), (250, 128, 0), (0, 250, 0)])
     label_colors = np.array([(0, 0, 0),  # 0=background
         # 1=building_flooded, 2=building_non_flooded
-        (250, 0, 0), (150, 100, 100),
+        (150, 100, 100), (150, 100, 100),
         # 3=road_flooded, 4=road_non_flooded, 5=water, 6=tree
-        (175, 175, 50), (128, 128, 128), (0, 250, 250), (0, 0, 250),
+        (128, 128, 128), (128, 128, 128), (0, 250, 250), (0, 128, 0),
         # 7=vehicle, 8=pool, 9=grass
-        (250, 0, 250), (250, 128, 0), (0, 250, 0)])
+        (250, 0, 250), (0, 250, 250), (0, 250, 0)])
     
     r = np.zeros_like(image).astype(np.uint8)
     g = np.zeros_like(image).astype(np.uint8)
