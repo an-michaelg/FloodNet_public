@@ -20,7 +20,6 @@ if config['mode']=="train":
     net.train(dataloader_tr, dataloader_va)
     net.test(dataloader_va, mode="test", vis_all = True)
 if config['mode']=="test":
-    net.test(dataloader_tr, mode="test", vis_all = True)
     net.test(dataloader_va, mode="test", vis_all = True)
 if config['use_wandb']:
     wandb.finish()

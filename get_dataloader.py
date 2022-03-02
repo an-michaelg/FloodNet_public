@@ -19,16 +19,16 @@ def seed_everything(num):
 seed_everything(42)
 
 def get_dataloader(config, mode='train'):
-    img_dim = config['image_dim']
+    img_dim = (256, 256) #config['image_dim']
     dataset = DataLoaderSegmentation('./dataset/train/Labeled', img_dim)
     loader = functools.partial(
         DataLoader,
         batch_size=config['batch_size'],
-        num_workers=config['num_workers'],
+        num_workers=0,
     )
     loader_list = []
     if mode=='train':
-        ratio_tr_data = config['ratio_tr_data']
+        ratio_tr_data = 0.8 #config['ratio_tr_data']
         num_all = len(dataset)
 
         idx = np.random.permutation(np.arange(num_all))

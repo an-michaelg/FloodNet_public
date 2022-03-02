@@ -11,9 +11,9 @@ class UNet(nn.Module):
         super(UNet, self).__init__()
         self.num_classes = config['num_classes']
         self.inc = 3
-        self.outc = config['num_filters']
-        self.img_h = config['image_dim'][0]
-        self.img_w = config['image_dim'][1]
+        self.outc = 16 #config['num_filters']
+        self.img_h = 256 #config['image_dim'][0]
+        self.img_w = 256 #config['image_dim'][1]
         
         self.down0 = RepeatConv(self.inc, self.outc)
         self.down1 = DownConv(self.outc, self.outc*2)

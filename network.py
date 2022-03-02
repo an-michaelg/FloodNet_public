@@ -17,7 +17,7 @@ class Network(object):
         self.optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(
             self.optimizer, gamma=config['exponential_gamma'])
-        self.loss_type = config['loss_type']
+        self.loss_type = "Dice"
         if self.config['use_cuda']: 
             self.model.cuda()
         # Recording the training losses and validation performance.
@@ -34,15 +34,19 @@ class Network(object):
         self.log_func = print
 
         # Define directory wghere we save states such as trained model.
-        if self.config['use_wandb']:
-            if self.config['mode'] == "train":
+        if self.config['mode'] == "train":
+            if self.config['use_wandb']:
                 self.log_dir = os.path.join(self.config['log_dir'], wandb.run.name)
-            elif self.config['mode'] == "test":
+            else:
+                self.log_dir = self.config['log_dir']
+        elif self.config['mode'] == "test":
+            if self.config['test_dir'] is not None:
                 self.log_dir = os.path.join(self.config['log_dir'], self.config['test_dir'])
             else:
-                raise NotImplementedError
+                self.log_dir = self.config['log_dir']
         else:
-            self.log_dir = self.config['log_dir']
+            raise NotImplementedError
+        
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
